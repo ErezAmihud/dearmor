@@ -15,6 +15,7 @@ PY_CDC = shutil.which("pycdc")
 PY_DIR = Path(__file__).parent.resolve() / "py_files"
 PY_INJECTOR = Path(__file__).parent.resolve() / "PyInjector.dll"
 TEMP_DIR = Path(__file__).parent.resolve() / "temp"
+TESTED_FILES = ("simple.py",)
 
 # without co_filename, co_name, co_firstlineno, co_lnotab
 all_code_data = [
@@ -31,7 +32,6 @@ all_code_data = [
         'co_freevars',
         'co_cellvars'
     ]
-    
 
 @pytest.fixture(scope='session')
 def temp_dir():
@@ -73,7 +73,7 @@ def compare_code(code1:types.CodeType, code2:types.CodeType, debug_data):
         assert code1 == code2, debug_data
 
 
-@pytest.mark.parametrize('py_file',('a.py',))
+@pytest.mark.parametrize('py_file',TESTED_FILES)
 def test_convert_by_bytecode(py_file, create_obfuscation, temp_dir):
     dearmor_main(create_obfuscation/py_file, PY_INJECTOR)
     
@@ -105,7 +105,7 @@ def compare_ast(node1, node2, debug_data):
 
 # TODO this ast test is dependent on pycdc and the comments in the code, which I don't like
 @pytest.mark.skip
-@pytest.mark.parametrize('py_file',('a.py',))
+@pytest.mark.parametrize('py_file',TESTED_FILES)
 def test_convert_by_pycdc(py_file, create_obfuscation, temp_dir):
     dearmor_main(create_obfuscation/py_file, PY_INJECTOR)
 
