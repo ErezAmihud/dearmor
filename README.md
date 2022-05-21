@@ -16,7 +16,7 @@ To change the files from pyc to py, use the amazing [docompyle++](https://github
 
 ### TODO
 [X] obfuscate entire module and not just single functions
-[ ] adding a nice user interface
+[X] adding a nice user interface
 [ ] Tests
 [ ] Trigger functions to load to unobfuscate them
 [ ] Automatically inject the dll to the process
@@ -24,6 +24,7 @@ To change the files from pyc to py, use the amazing [docompyle++](https://github
 [ ] check if it works __pyarmor_exit__ is called before we inject the dll
 [ ] check on advanced modes
 [ ] make the code work on versions other than >3.6 (I love typing... we have to remove those)
+[ ] automatically close whatever windows the running application may start
 
 
 ### Desclaimer
