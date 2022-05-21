@@ -10,7 +10,7 @@ setup(name='dearmor',
       requires=['pyinjector', 'psutil'],
       extras_require={"test": "pytest"},
       package_data={
-        'code': ['code.py'],
+        'dearmor': ['code.py'],
       },
       entry_points={
                         'console_scripts': [

@@ -1,7 +1,7 @@
 from argparse import Namespace
 
 import pytest
-from ..code import orig_or_new
+from dearmor.code import orig_or_new
 
 def test_set():
     @orig_or_new

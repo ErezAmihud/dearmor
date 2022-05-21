@@ -11,7 +11,6 @@ from pyinjector import inject
 def main(file:Path, pyinjector:Path):
     file= file.resolve()
     pyinjector = pyinjector.resolve()
-
     shutil.copy(Path(__file__).parent.resolve() / "code.py", file.parent / "code.py")
     try:
         p = subprocess.Popen([sys.executable, str(file)], cwd=str(file.parent))
