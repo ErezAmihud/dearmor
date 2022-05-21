@@ -1,17 +1,12 @@
 from functools import wraps
+from threading import local
 import typing
 import struct
 from pathlib import Path
 import shutil
 import marshal
-import os,sys,inspect,re,dis,json,types
+import sys,inspect,dis,types
 import inspect
-
-# TODO load function by calling it...
-# TODO find a better way to load a function - so that it won't execute what is inside (in case of mallicious)
-
-# TODO if the first function called exits before we generate our exit function I think everything probably will fail - we should load the function after
-# TODO do it without using the dll injection method - to make it look much nicer    
 
 def get_magic():
     if sys.version_info >= (3,4):
@@ -180,11 +175,13 @@ def remove_pyarmor_code(code:types.CodeType):
     1. remove all the pyarmor specific names in constants
     2. remove all the random code that pyarmor adds at the start of the functions by finding the try-finally that wraps the whole thing
     3. using the try finally find the last relevant opcode of the function
+    4. add RETURN_VALUE to the end of the function
 
     """
     # remove names
     names = tuple(n for n in code.co_names if not n.startswith('__armor')) # remove the pyarmor functions
-    code = copy_code_obj(code, co_names=names)
+    code = copy_code_obj(code, co_names=names, co_stacksize=code.co_stacksize-3)    
+    code = copy_code_obj(code, co_flags=code.co_flags^0x22000000) # remove weird flags
 
     # remove until try except (the reason for totally removing is that dis.get_instructions raises an exception in some versions)
     raw_code = code.co_code
@@ -197,6 +194,8 @@ def remove_pyarmor_code(code:types.CodeType):
     try_block = next(itera)
     first_op = next(itera)
     raw_code = raw_code[first_op.offset:try_block.arg]
+    raw_code += chr(83).encode() # add return_value op
+    raw_code += chr(0).encode() # add return_value op
     return copy_code_obj(code, co_code=raw_code)
 
 @ignore_function
