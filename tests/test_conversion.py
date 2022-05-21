@@ -8,14 +8,14 @@ from pathlib import Path
 import shutil
 import sys
 import pytest
-from dearmor.code import code_to_bytecode, get_magic
+from dearmor.code import DUMP_DIR, code_to_bytecode, get_magic
 from dearmor import dearmor_main
 
 PY_CDC = shutil.which("pycdc")
 PY_DIR = Path(__file__).parent.resolve() / "py_files"
 PY_INJECTOR = Path(__file__).parent.resolve() / "PyInjector.dll"
 TEMP_DIR = Path(__file__).parent.resolve() / "temp"
-TESTED_FILES = ("simple.py", 'functions_all_called.py', 'function_some_callable.py')
+TESTED_FILES = ("simple.py", 'functions_all_called.py', 'functions_some_called.py')
 
 # without co_filename, co_name, co_firstlineno, co_lnotab, co_stacksize
 all_code_data = [
@@ -78,7 +78,8 @@ def test_convert_by_bytecode(py_file, create_obfuscation, temp_dir):
     with open(file_name, 'rb') as f:
         expected = compile(f.read(), file_name, 'exec')
     
-    with open(str(create_obfuscation/'dump'/(py_file+'c')), 'wb') as f:
+    DUMP_DIR.mkdir(exist_ok=True)
+    with open(str(DUMP_DIR/(py_file+'c')), 'wb') as f:
         f.write(code_to_bytecode(expected))
 
 
