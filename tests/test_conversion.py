@@ -8,22 +8,21 @@ from pathlib import Path
 import shutil
 import sys
 import pytest
-from dearmor.code import get_magic
+from dearmor.code import code_to_bytecode, get_magic
 from dearmor import dearmor_main
 
 PY_CDC = shutil.which("pycdc")
 PY_DIR = Path(__file__).parent.resolve() / "py_files"
 PY_INJECTOR = Path(__file__).parent.resolve() / "PyInjector.dll"
 TEMP_DIR = Path(__file__).parent.resolve() / "temp"
-TESTED_FILES = ("simple.py",)
+TESTED_FILES = ("simple.py", 'functions_all_called.py', 'function_some_callable.py')
 
-# without co_filename, co_name, co_firstlineno, co_lnotab
+# without co_filename, co_name, co_firstlineno, co_lnotab, co_stacksize
 all_code_data = [
         'co_argcount',
         'co_posonlyargcount',
         'co_kwonlyargcount',
         'co_nlocals',
-        'co_stacksize',
         'co_flags',
         'co_code',
         'co_consts',
@@ -68,7 +67,7 @@ def compare_code(code1:types.CodeType, code2:types.CodeType, debug_data):
             compare_code(getattr(code1, k), getattr(code2, k), os.linesep.join([debug_data, f'checking {k}']))
     elif isinstance(code1, (list, tuple)):
         for i, n in enumerate(zip(code1, code2)):
-            compare_code(n[0], n[1], os.linesep.join([debug_data, f"check item number {i}"]))
+            compare_code(n[0], n[1], os.linesep.join([debug_data, f"check item number {i} {n[0]} and {n[1]}"]))
     else:
         assert code1 == code2, debug_data
 
@@ -83,7 +82,10 @@ def test_convert_by_bytecode(py_file, create_obfuscation, temp_dir):
     file_name = str(PY_DIR/py_file)
     with open(file_name, 'rb') as f:
         expected = compile(f.read(), file_name, 'exec')
-        
+    
+    with open(str(create_obfuscation/'dump'/file_name+'c'), 'wb') as f:
+        f.write(code_to_bytecode(expected))
+
     compare_code(expected, generated_by_us, f"start{os.linesep}")
 
 

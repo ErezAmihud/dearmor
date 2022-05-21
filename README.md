@@ -17,14 +17,22 @@ To change the files from pyc to py, use the amazing [docompyle++](https://github
 ### TODO
 [X] obfuscate entire module and not just single functions
 [X] adding a nice user interface
-[ ] Tests
+[X] Tests
+[X] Trigger functions to load to unobfuscate them
+[ ] add black formatting
 [ ] Find out how to include `code.py` as package data
-[ ] Trigger functions to load to unobfuscate them
 [ ] Use a nicer way to inject the code - I don't like that I have to compile the dll
 [ ] make the code work on versions other than >3.6 (I love typing... we have to remove those)
 [ ] automatically close whatever windows the running application may start
 [ ] check on advanced modes
+[ ] Figure out why our stack is bigger than the others, because it is interesting
 
+
+### Contribute
+Just ask away or make a pull request.
+If something is unclear open an issue
+
+It was done in the last week, so there might be some bugs I haven't saw yet. Open issues!
 
 ### Desclaimer
-This repo is for educational perpused only.
+This repo is for educational purposes only. I take no responsibility for its usage. 

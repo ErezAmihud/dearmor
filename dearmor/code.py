@@ -22,6 +22,7 @@ if DUMP_DIR.exists():
     shutil.rmtree(str(DUMP_DIR))
 DUMP_DIR.mkdir()
 IGNORED_FUNCTIONS = []
+started_exiting=False
 
 def get_function_name(func):
     return f'{func.__module__}.{func.__qualname__}'
@@ -36,8 +37,6 @@ ignore_function(ignore_function)
 if 'pyarmor_runtime' in locals(): # for testing
     ignore_function(pyarmor_runtime)
 ignore_function(get_magic)
-
-done=False
 
 @ignore_function
 def output_code(obj):
@@ -56,15 +55,15 @@ def output_code(obj):
 
 @ignore_function
 def __armor_exit__():
-    global done
-    if not done:
+    global started_exiting
+    if not started_exiting:
+        started_exiting = True
         frame = inspect.currentframe()
         while frame.f_back.f_back != None: # NOTE the frame before None is the obfuscated one
             frame = frame.f_back
-        code = frame.f_code 
+        code = frame.f_code
         code = output_code(code)
-        marshal_to_pyc(DUMP_DIR/'mod.pyc', code)
-    done=True
+        marshal_to_pyc(DUMP_DIR/'mod.pyc', code) # TODO change to indicative name
 
 
 @ignore_function
@@ -172,15 +171,17 @@ def remove_pyarmor_code(code:types.CodeType):
     removes all of pyarmor code from a given function and keep only the needed code
 
     The steps are:
-    1. remove all the pyarmor specific names in constants
-    2. remove all the random code that pyarmor adds at the start of the functions by finding the try-finally that wraps the whole thing
-    3. using the try finally find the last relevant opcode of the function
-    4. add RETURN_VALUE to the end of the function
+    * remove all the pyarmor specific names in constants
+    * remove all the random code that pyarmor adds at the start of the functions by finding the try-finally that wraps the whole thing
+    * using the try finally find the last relevant opcode of the function
+    * add RETURN_VALUE to the end of the function
 
     """
+    # TODO exit on __armor_enter__
+    exec(code)
     # remove names
     names = tuple(n for n in code.co_names if not n.startswith('__armor')) # remove the pyarmor functions
-    code = copy_code_obj(code, co_names=names, co_stacksize=code.co_stacksize-3)    
+    code = copy_code_obj(code, co_names=names)
     code = copy_code_obj(code, co_flags=code.co_flags^0x22000000) # remove weird flags
 
     # remove until try except (the reason for totally removing is that dis.get_instructions raises an exception in some versions)

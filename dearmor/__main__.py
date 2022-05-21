@@ -8,7 +8,9 @@ import argparse
 from pyinjector import inject
 
 
-def main(file:Path, pyinjector:Path):
+def main(file:Path=None, pyinjector:Path=None, print_user_messages:bool=False):
+    assert file
+    assert pyinjector
     file= file.resolve()
     pyinjector = pyinjector.resolve()
     shutil.copy(Path(__file__).parent.resolve() / "code.py", file.parent / "code.py")
@@ -20,9 +22,10 @@ def main(file:Path, pyinjector:Path):
         inject(child[0].pid, str(pyinjector))
         p.communicate()
         if p.poll() != 0:
-            raise ValueError(f"running file itself failed: {stdout}")
-        print("success!")
-        print("Output at: ", str(file.parent / "dump"))
+            raise ValueError(f"running file itself failed")
+        if print_user_messages:
+            print("success!")
+            print("Output at: ", str(file.parent / "dump"))
     finally:
         (file.parent / "code.py").unlink()
 
@@ -30,7 +33,7 @@ def main_cli():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", help="The file the program should run. The file should block atleast for 1 second", required=True, type=Path, dest="file")
     parser.add_argument("-n", "--injector", help="The path to the pyinjector dll", type=Path, required=True, dest="pyinjector")
-    main(**parser.parse_args().__dict__)
+    main(print_user_messages=True, **parser.parse_args().__dict__)
 
 if __name__ == "__main__":
     main_cli()
