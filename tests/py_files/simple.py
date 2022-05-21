@@ -1,4 +1,4 @@
 import time
 
 time.sleep(2)
-print("hello")
+b = 1+1

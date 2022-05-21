@@ -4,11 +4,11 @@ time.sleep(2)
 
 
 def a():
-    print("hi")
+    return "hi"
 
 
 def b():
-    print("bye")
+    return "bye"
 
 
 a()

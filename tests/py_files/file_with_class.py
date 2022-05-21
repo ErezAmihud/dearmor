@@ -10,4 +10,4 @@ class a:
 
 
 ins = a(9)
-print(ins.b)
+c = ins.b == 4
