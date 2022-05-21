@@ -12,6 +12,8 @@ I assume you have an obfuscated py and the pytransform module+dll in the same pl
 
 The files will be created in a folder called "dump" in the same directory
 
+To change the files from pyc to py, use the amazing [docompyle++](https://github.com/zrax/pycdc) repository
+
 ### TODO
 [ ] Automatically inject the dll to the process
 [ ] Use a nicer way to inject the code - I don't like that I have to compile the dll

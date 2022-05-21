@@ -1,3 +1,7 @@
+import pytest
+
+
+@pytest.mark.skip
 def test_single_function():
     # generate obfuscated py from py
     # import obfuscated py

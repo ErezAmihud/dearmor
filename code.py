@@ -8,11 +8,10 @@ import os,sys,inspect,re,dis,json,types
 import inspect
 
 # TODO load function by calling it...
-# TODO find a better way to load a function
-# TODO I can get the frame source from the __pyarmor_exit__ function
+# TODO find a better way to load a function - so that it won't execute what is inside (in case of mallicious)
 
-# TODO if the first function called exits before we generate our exit function everything probably will fail - we should load the function after
-# TODO do it without using the dll injection method    
+# TODO if the first function called exits before we generate our exit function I think everything probably will fail - we should load the function after
+# TODO do it without using the dll injection method - to make it look much nicer    
 
 def get_magic():
     if sys.version_info >= (3,4):
@@ -43,10 +42,34 @@ if 'pyarmor_runtime' in locals(): # for testing
     ignore_function(pyarmor_runtime)
 ignore_function(get_magic)
 
+done=False
+
+@ignore_function
+def output_code(obj):
+    if isinstance(obj, types.CodeType):
+        obj = remove_pyarmor_code(obj)
+        obj = copy_code_obj(
+            obj,
+            co_names=tuple(output_code(name) for name in obj.co_names),
+            co_varnames=tuple(output_code(name) for name in obj.co_varnames),
+            co_freevars=tuple(output_code(name) for name in obj.co_freevars),
+            co_cellvars=tuple(output_code(name) for name in obj.co_cellvars),
+            co_consts=tuple(output_code(name) for name in obj.co_consts)
+        )
+
+    return obj
 
 @ignore_function
 def __armor_exit__():
-    pass
+    global done
+    if not done:
+        frame = inspect.currentframe()
+        while frame.f_back.f_back != None: # NOTE the frame before None is the obfuscated one
+            frame = frame.f_back
+        code = frame.f_code 
+        code = output_code(code)
+        marshal_to_pyc(DUMP_DIR/'mod.pyc', code)
+    done=True
 
 
 @ignore_function
