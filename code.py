@@ -202,38 +202,6 @@ def remove_pyarmor_code(code:types.CodeType):
 @ignore_function
 def marshal_to_pyc(file_path:typing.Union[str, Path], code:types.CodeType):
     file_path = str(file_path)
-    # TODO source code of module must be used and deleted in the import of the module! it makes sence!
-    # TODO actually build those function into a file
     pyc_code = code_to_bytecode(code)
     with open(file_path, 'wb') as f:
         f.write(pyc_code)
-
-@ignore_function
-def should_ignore_function(f):
-    mod_spec = sys.modules[f.__module__].__spec__
-    
-    if mod_spec: # if __main__ is the module this is false
-        mod_origin = mod_spec.origin
-        if "Programs\\Python" in mod_origin:
-            return True
-    if get_function_name(f) in IGNORED_FUNCTIONS:
-        return True
-    return False
-
-@ignore_function
-def handle_function(f):
-    if should_ignore_function(f):
-        return 
-    code = f.__code__
-    code = remove_pyarmor_code(code)
-    marshal_to_pyc(str(DUMP_DIR / f'{get_function_name(f)}.pyc'), code)
-
-@ignore_function
-def getFunctions():
-    members = inspect.getmembers(sys.modules[__name__])
-    for member in members:
-        if inspect.isfunction(member[1]):
-            handle_function(member[1])
-
-
-getFunctions()
