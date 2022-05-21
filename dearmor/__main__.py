@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 import subprocess
@@ -15,14 +16,15 @@ def main(file:Path=None, pyinjector:Path=None, print_user_messages:bool=False):
     pyinjector = pyinjector.resolve()
     shutil.copy(Path(__file__).parent.resolve() / "code.py", file.parent / "code.py")
     try:
-        p = subprocess.Popen([sys.executable, str(file)], cwd=str(file.parent))
+        p = subprocess.Popen([sys.executable, str(file)], cwd=str(file.parent), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         time.sleep(1) # this is used to allow the python process to create it's child process
         current_process = psutil.Process(p.pid)
         child = current_process.children(recursive=True)
         inject(child[0].pid, str(pyinjector))
-        p.communicate()
+        stdout, _ = p.communicate()
+        stdout = stdout.decode()
         if p.poll() != 0:
-            raise ValueError(f"running file itself failed")
+            raise ValueError(f"running file itself failed. STDOUT:{os.linesep}{stdout}")
         if print_user_messages:
             print("success!")
             print("Output at: ", str(file.parent / "dump"))

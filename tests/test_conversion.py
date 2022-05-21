@@ -74,21 +74,20 @@ def compare_code(code1:types.CodeType, code2:types.CodeType, debug_data):
 
 @pytest.mark.parametrize('py_file',TESTED_FILES)
 def test_convert_by_bytecode(py_file, create_obfuscation, temp_dir):
-    dearmor_main(create_obfuscation/py_file, PY_INJECTOR)
-    
-    generated_by_us = open(str((create_obfuscation / 'dump' / 'mod.pyc').resolve()), 'rb').read()
-    generated_by_us = pyc_to_code(generated_by_us)
-
     file_name = str(PY_DIR/py_file)
     with open(file_name, 'rb') as f:
         expected = compile(f.read(), file_name, 'exec')
     
-    with open(str(create_obfuscation/'dump'/file_name+'c'), 'wb') as f:
+    with open(str(create_obfuscation/'dump'/(py_file+'c')), 'wb') as f:
         f.write(code_to_bytecode(expected))
 
+
+    dearmor_main(create_obfuscation/py_file, PY_INJECTOR)
+
+    generated_by_us = open(str((create_obfuscation / 'dump' / 'mod.pyc').resolve()), 'rb').read()
+    generated_by_us = pyc_to_code(generated_by_us)
+
     compare_code(expected, generated_by_us, f"start{os.linesep}")
-
-
 
 
 def compare_ast(node1, node2, debug_data):

@@ -1,9 +1,7 @@
 from functools import wraps
-from threading import local
 import typing
 import struct
 from pathlib import Path
-import shutil
 import marshal
 import sys,inspect,dis,types
 import inspect
@@ -18,27 +16,10 @@ def get_magic():
 
 MAGIC_NUMBER = get_magic()
 DUMP_DIR = Path("./dump")
-if DUMP_DIR.exists():
-    shutil.rmtree(str(DUMP_DIR))
-DUMP_DIR.mkdir()
-IGNORED_FUNCTIONS = []
+DUMP_DIR.mkdir(exist_ok=True)
+
 started_exiting=False
 
-def get_function_name(func):
-    return f'{func.__module__}.{func.__qualname__}'
-
-def ignore_function(func):
-    IGNORED_FUNCTIONS.append(get_function_name(func))
-    return func
-
-
-ignore_function(get_function_name)
-ignore_function(ignore_function)
-if 'pyarmor_runtime' in locals(): # for testing
-    ignore_function(pyarmor_runtime)
-ignore_function(get_magic)
-
-@ignore_function
 def output_code(obj):
     if isinstance(obj, types.CodeType):
         obj = remove_pyarmor_code(obj)
@@ -53,7 +34,6 @@ def output_code(obj):
 
     return obj
 
-@ignore_function
 def __armor_exit__():
     global started_exiting
     if not started_exiting:
@@ -66,12 +46,10 @@ def __armor_exit__():
         marshal_to_pyc(DUMP_DIR/'mod.pyc', code) # TODO change to indicative name
 
 
-@ignore_function
 def _pack_uint32(val):
     """ Convert integer to 32-bit little-endian bytes """
     return struct.pack("<I", val)
 
-@ignore_function
 def code_to_bytecode(code, mtime=0, source_size=0):
     """
     Serialise the passed code object (PyCodeObject*) to bytecode as a .pyc file
@@ -102,7 +80,6 @@ def code_to_bytecode(code, mtime=0, source_size=0):
 
     return data
 
-@ignore_function
 def orig_or_new(func):
     sig = inspect.signature(func)
     kwarg_params = list(sig.parameters.keys())
@@ -122,7 +99,6 @@ def orig_or_new(func):
     wrapee.__signature__ = sig
     return wrapee
 
-@ignore_function
 @orig_or_new
 def copy_code_obj(
     co_argcount=None,
@@ -165,7 +141,6 @@ def copy_code_obj(
         co_cellvars
     )
 
-@ignore_function
 def remove_pyarmor_code(code:types.CodeType):
     """
     removes all of pyarmor code from a given function and keep only the needed code
@@ -199,7 +174,6 @@ def remove_pyarmor_code(code:types.CodeType):
     raw_code += chr(0).encode() # add return_value op
     return copy_code_obj(code, co_code=raw_code)
 
-@ignore_function
 def marshal_to_pyc(file_path:typing.Union[str, Path], code:types.CodeType):
     file_path = str(file_path)
     pyc_code = code_to_bytecode(code)
