@@ -83,7 +83,7 @@ def test_convert_by_bytecode(py_file, create_obfuscation, temp_dir):
         f.write(code_to_bytecode(expected))
 
 
-    dearmor_main(create_obfuscation/py_file, PY_INJECTOR)
+    dearmor_main(create_obfuscation/py_file, PY_INJECTOR, Path('out.txt'))
 
     generated_by_us = open(str((create_obfuscation / 'dump' / 'mod.pyc').resolve()), 'rb').read()
     generated_by_us = pyc_to_code(generated_by_us)
@@ -109,7 +109,7 @@ def compare_ast(node1, node2, debug_data):
 @pytest.mark.skip
 @pytest.mark.parametrize('py_file',TESTED_FILES)
 def test_convert_by_pycdc(py_file, create_obfuscation, temp_dir):
-    dearmor_main(create_obfuscation/py_file, PY_INJECTOR)
+    dearmor_main(create_obfuscation/py_file, PY_INJECTOR, Path('out.txt'))
 
     p = subprocess.Popen([PY_CDC, "-i", str(temp_dir / 'dump' / 'mod.pyc'), "-o", str(temp_dir / 'dump' / 'mod.py')], cwd=str(temp_dir) , stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout, _ = p.communicate()
