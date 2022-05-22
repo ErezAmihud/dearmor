@@ -15,15 +15,16 @@ PY_CDC = shutil.which("pycdc")
 PY_DIR = Path(__file__).parent.resolve() / "py_files"
 PY_INJECTOR = Path(__file__).parent.resolve() / "PyInjector.dll"
 TEMP_DIR = Path(__file__).parent.resolve() / "temp"
-TESTED_FILES = ("simple.py", 'functions_all_called.py', 'functions_some_called.py')
+TESTED_FILES = os.listdir(str(Path(__file__).parent.resolve() / "py_files"))
+TESTED_FILES.remove("functions_with_parameters.py")
+TESTED_FILES.remove("file_with_class.py")
 
-# without co_filename, co_name, co_firstlineno, co_lnotab, co_stacksize
+# without co_filename, co_name, co_firstlineno, co_lnotab, co_stacksize, co_flags
 all_code_data = [
         'co_argcount',
         'co_posonlyargcount',
         'co_kwonlyargcount',
         'co_nlocals',
-        'co_flags',
         'co_code',
         'co_consts',
         'co_names',

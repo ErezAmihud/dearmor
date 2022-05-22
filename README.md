@@ -19,13 +19,12 @@ To change the files from pyc to py, use the amazing [docompyle++](https://github
 [X] adding a nice user interface
 [X] Tests
 [X] Trigger functions to load to unobfuscate them
+[X] automatically close whatever windows the running application may start
 [ ] add black formatting
 [ ] Find out how to include `code.py` as package data
 [ ] Use a nicer way to inject the code - I don't like that I have to compile the dll
-[ ] make the code work on versions other than >3.6 (I love typing... we have to remove those)
-[ ] automatically close whatever windows the running application may start
+[ ] make the code work on versions other than >3.6
 [ ] check on advanced modes
-[ ] Figure out why our stack is bigger than the others, because it is interesting
 
 
 ### Contribute

@@ -6,14 +6,9 @@ import marshal
 import sys,inspect,dis,types
 import inspect
 
-import ctypes
 
-P_SIZE = ctypes.sizeof(ctypes.c_void_p)
-IS_X64 = P_SIZE == 8
+TRY_STATEMENT = 122
 
-P_MEM_TYPE = ctypes.POINTER(ctypes.c_ulong if IS_X64 else ctypes.c_uint)
-
-counter = []
 def get_magic():
     if sys.version_info >= (3,4):
         from importlib.util import MAGIC_NUMBER
@@ -49,9 +44,26 @@ def execute_code(obj):
         tuple(execute_code(name) for name in obj.co_freevars),
         tuple(execute_code(name) for name in obj.co_cellvars),
         tuple(execute_code(name) for name in obj.co_consts)
-        # TODO exit after 1 line, and only if did not do it already
-        exec(obj)
-    return obj
+        
+        # to exit after the __armor_enter__ without executing anything else, I have to stop after __armor_enter__ is called, which mean I need to exit on the try.
+        
+        def f(frame: types.FrameType, event:str, arg):
+            if frame.f_code == obj:
+                frame.f_trace_opcodes = True
+                frame.f_trace_lines = True
+                if event == "call":
+                    return f
+                else:
+                    if frame.f_lasti >= frame.f_code.co_code.find(TRY_STATEMENT):
+                        raise ValueError()
+        
+        try:
+            sys.settrace(f)
+            exec(obj)
+        except ValueError:
+            pass
+        finally:
+            sys.settrace(None)
 
 def __armor_exit__():
     global started_exiting
@@ -174,10 +186,9 @@ def remove_pyarmor_code(code:types.CodeType):
     """
     names = tuple(n for n in code.co_names if not n.startswith('__armor')) # remove the pyarmor functions
     code = copy_code_obj(code, co_names=names)
-    code = copy_code_obj(code, co_flags=code.co_flags^0x22000000) # remove weird flags
     
     raw_code = code.co_code
-    try_start = raw_code.find(122)
+    try_start = raw_code.find(TRY_STATEMENT)
     raw_code = raw_code[try_start:]
     code = copy_code_obj(code, co_names=names, co_code=raw_code)
 
