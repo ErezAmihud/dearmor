@@ -6,6 +6,14 @@ import marshal
 import sys,inspect,dis,types
 import inspect
 
+import ctypes
+
+P_SIZE = ctypes.sizeof(ctypes.c_void_p)
+IS_X64 = P_SIZE == 8
+
+P_MEM_TYPE = ctypes.POINTER(ctypes.c_ulong if IS_X64 else ctypes.c_uint)
+
+counter = []
 def get_magic():
     if sys.version_info >= (3,4):
         from importlib.util import MAGIC_NUMBER
@@ -20,9 +28,9 @@ DUMP_DIR.mkdir(exist_ok=True)
 
 started_exiting=False
 
+
 def output_code(obj):
     if isinstance(obj, types.CodeType):
-        obj = remove_pyarmor_code(obj)
         obj = copy_code_obj(
             obj,
             co_names=tuple(output_code(name) for name in obj.co_names),
@@ -31,7 +39,18 @@ def output_code(obj):
             co_cellvars=tuple(output_code(name) for name in obj.co_cellvars),
             co_consts=tuple(output_code(name) for name in obj.co_consts)
         )
+        obj = remove_pyarmor_code(obj)
+    return obj
 
+def execute_code(obj):
+    if isinstance(obj, types.CodeType):
+        tuple(execute_code(name) for name in obj.co_names),
+        tuple(execute_code(name) for name in obj.co_varnames),
+        tuple(execute_code(name) for name in obj.co_freevars),
+        tuple(execute_code(name) for name in obj.co_cellvars),
+        tuple(execute_code(name) for name in obj.co_consts)
+        # TODO exit after 1 line, and only if did not do it already
+        exec(obj)
     return obj
 
 def __armor_exit__():
@@ -42,6 +61,7 @@ def __armor_exit__():
         while frame.f_back.f_back != None: # NOTE the frame before None is the obfuscated one
             frame = frame.f_back
         code = frame.f_code
+        execute_code(code)
         code = output_code(code)
         marshal_to_pyc(DUMP_DIR/'mod.pyc', code) # TODO change to indicative name
 
@@ -152,14 +172,10 @@ def remove_pyarmor_code(code:types.CodeType):
     * add RETURN_VALUE to the end of the function
 
     """
-    # TODO exit on __armor_enter__
-    exec(code)
-    # remove names
     names = tuple(n for n in code.co_names if not n.startswith('__armor')) # remove the pyarmor functions
     code = copy_code_obj(code, co_names=names)
     code = copy_code_obj(code, co_flags=code.co_flags^0x22000000) # remove weird flags
-
-    # remove until try except (the reason for totally removing is that dis.get_instructions raises an exception in some versions)
+    
     raw_code = code.co_code
     try_start = raw_code.find(122)
     raw_code = raw_code[try_start:]
