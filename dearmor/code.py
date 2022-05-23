@@ -1,3 +1,5 @@
+import tempfile
+import subprocess
 from functools import wraps
 import typing
 import struct
@@ -5,6 +7,7 @@ from pathlib import Path
 import marshal
 import sys,inspect,dis,types
 import inspect
+from unittest.mock import MagicMock
 
 
 TRY_STATEMENT = 122
@@ -37,6 +40,15 @@ def output_code(obj):
         obj = remove_pyarmor_code(obj)
     return obj
 
+def print_func_data(obj: types.CodeType):
+    """
+    A debug functions that uses cdas to print the code object
+    (dis raises error in some python versions)
+    """    
+    path = tempfile.mktemp()
+    marshal_to_pyc(path, obj)
+    subprocess.Popen(['pycdas', path]).communicate()
+
 def execute_code(obj):
     if isinstance(obj, types.CodeType):
         tuple(execute_code(name) for name in obj.co_names),
@@ -46,24 +58,18 @@ def execute_code(obj):
         tuple(execute_code(name) for name in obj.co_consts)
         
         # to exit after the __armor_enter__ without executing anything else, I have to stop after __armor_enter__ is called, which mean I need to exit on the try.
+        args = [MagicMock() for i in range(obj.co_posonlyargcount)]
+        kwargs = {obj.co_varnames[-i]:MagicMock()  for i in range(obj.co_kwonlyargcount)}
+        vars_ = [MagicMock() for _ in range(obj.co_argcount-obj.co_kwonlyargcount-obj.co_posonlyargcount)]
+
         
-        def f(frame: types.FrameType, event:str, arg):
-            if frame.f_code == obj:
-                frame.f_trace_opcodes = True
-                frame.f_trace_lines = True
-                if event == "call":
-                    return f
-                else:
-                    if frame.f_lasti >= frame.f_code.co_code.find(TRY_STATEMENT):
-                        raise ValueError()
-        
-        try:
-            sys.settrace(f)
-            exec(obj)
-        except ValueError:
+        def a():
             pass
-        finally:
-            sys.settrace(None)
+        a.__code__ = obj
+        try:
+            a(*args, *vars_, **kwargs)
+        except:
+            pass
 
 def __armor_exit__():
     global started_exiting
