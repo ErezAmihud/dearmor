@@ -15,8 +15,15 @@ PY_CDC = shutil.which("pycdc")
 PY_DIR = Path(__file__).parent.resolve() / "py_files"
 PY_INJECTOR = Path(__file__).parent.resolve() / "PyInjector.dll"
 TEMP_DIR = Path(__file__).parent.resolve() / "temp"
-TESTED_FILES = os.listdir(str(Path(__file__).parent.resolve() / "py_files"))
-TESTED_FILES.remove('call_break_before_inner.py')
+TESTED_FILES = [
+    'simple.py',
+    'functions_with_parameters.py',
+    'functions_some_called.py',
+    'functions_all_called.py',
+    'file_with_class.py',
+    ]
+
+TESTED_FILES.append(pytest.param('call_break_before_inner.py', marks=pytest.mark.timeout(20)))
 
 # without co_filename, co_name, co_firstlineno, co_lnotab, co_stacksize, co_flags
 all_code_data = [
@@ -71,7 +78,6 @@ def compare_code(code1:types.CodeType, code2:types.CodeType, debug_data):
     else:
         assert code1 == code2, debug_data
 
-@pytest.mark.timeout(20) # NOTE this exists only because of the "don't call the actual function" thing
 @pytest.mark.parametrize('py_file',TESTED_FILES)
 def test_convert_by_bytecode(py_file, create_obfuscation, temp_dir):
     file_name = str(PY_DIR/py_file)

@@ -4,6 +4,4 @@ time.sleep(2)
 
 
 def a():
-    time.sleep(5000)
-
-a()
+    time.sleep(20000)

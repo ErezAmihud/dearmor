@@ -37,6 +37,7 @@ def output_code(obj):
             co_cellvars=tuple(output_code(name) for name in obj.co_cellvars),
             co_consts=tuple(output_code(name) for name in obj.co_consts)
         )
+        obj = decrypt_code(obj)
         obj = remove_pyarmor_code(obj)
     return obj
 
@@ -49,27 +50,20 @@ def print_func_data(obj: types.CodeType):
     marshal_to_pyc(path, obj)
     subprocess.Popen(['pycdas', path]).communicate()
 
-def execute_code(obj):
-    if isinstance(obj, types.CodeType):
-        tuple(execute_code(name) for name in obj.co_names),
-        tuple(execute_code(name) for name in obj.co_varnames),
-        tuple(execute_code(name) for name in obj.co_freevars),
-        tuple(execute_code(name) for name in obj.co_cellvars),
-        tuple(execute_code(name) for name in obj.co_consts)
-        
-        # to exit after the __armor_enter__ without executing anything else, I have to stop after __armor_enter__ is called, which mean I need to exit on the try.
-        args = [MagicMock() for i in range(obj.co_posonlyargcount)]
-        kwargs = {obj.co_varnames[-i]:MagicMock()  for i in range(obj.co_kwonlyargcount)}
-        vars_ = [MagicMock() for _ in range(obj.co_argcount-obj.co_kwonlyargcount-obj.co_posonlyargcount)]
+def decrypt_code(obj):
+    new_code = obj.co_code[:22] + b'S\x00' + obj.co_code[24:] # replace the pop_top after __pyarmor_enter__ to return
+    obj = copy_code_obj(obj, co_code=new_code)
 
-        
-        def a():
-            pass
-        a.__code__ = obj
-        try:
-            a(*args, *vars_, **kwargs)
-        except:
-            pass
+    def a():
+        pass
+    a.__code__ = obj
+
+    args = [MagicMock() for i in range(obj.co_posonlyargcount)]
+    kwargs = {obj.co_varnames[-i]:MagicMock()  for i in range(obj.co_kwonlyargcount)}
+    vars_ = [MagicMock() for _ in range(obj.co_argcount-obj.co_kwonlyargcount-obj.co_posonlyargcount)]
+
+    a(*args, *vars_, **kwargs)  
+    return obj
 
 def __armor_exit__():
     global started_exiting
@@ -79,7 +73,6 @@ def __armor_exit__():
         while frame.f_back.f_back != None: # NOTE the frame before None is the obfuscated one
             frame = frame.f_back
         code = frame.f_code
-        execute_code(code)
         code = output_code(code)
         marshal_to_pyc(DUMP_DIR/'mod.pyc', code) # TODO change to indicative name
 

@@ -19,10 +19,10 @@ To change the files from pyc to py, use the amazing [docompyle++](https://github
 [X] adding a nice user interface
 [X] Tests
 [X] Trigger functions to load to unobfuscate them
-[ ] figure out a way to resolve the functions without invoking their actual code (maybe run the code in a subinterpreter where we can close after the call to __armor_enter__  ?)
+[X] figure out a way to resolve the functions without invoking their actual code (maybe run the code in a subinterpreter where we can close after the call to __armor_enter__  ?)
 [ ] add black formatting
 [ ] Find out how to include `code.py` as package data
-[ ] Use a nicer way to inject the code - I don't like that I have to compile the dll
+[ ] Use a nicer way to inject the code - I don't like that I have to compile the dll, and we can just use ctypes to disable the gil.
 [ ] make the code work on versions other than >3.6
 [ ] check on advanced modes
 

@@ -8,7 +8,7 @@ setup(name='dearmor',
       url='https://github.com/ErezAmihud/dearmor',
       packages=['dearmor'],
       requires=['pyinjector', 'psutil'],
-      extras_require={"test": "pytest"},
+      extras_require={"test": ["pytest", 'pytest-timeout']},
       package_data={
         'dearmor': ['code.py'],
       },
