@@ -4,7 +4,7 @@ This is a repo to deobfuscate pyarmor files.
 Right now I can obfuscate functions in the obfuscated file.
 
 ### Method
-I assume you have an obfuscated py and the pytransform module+dll in the same place. To extract it you can use [python-exe-unpacker](https://github.com/countercept/python-exe-unpacker) and the script `decompile.py` in this repository to make runable pyc files. Then you need to delete all the files that are not the main ones. This may not be the full process, open an issue if you want me to write the full one.
+I assume you have an obfuscated py and the pytransform module+dll in the same place. To extract it you can use [python-exe-unpacker](https://github.com/countercept/python-exe-unpacker) to make runable pyc files. Then you need to delete all the files that are not the main ones. This may not be the full process, open an issue if you want me to write the full one.
 
 1. Put code.py in the same directory as the obfuscated py
 1. Run the obfuscated file with your python
