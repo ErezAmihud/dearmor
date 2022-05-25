@@ -14,6 +14,11 @@ The files will be created in a folder called "dump" in the same directory
 
 To change the files from pyc to py, use the amazing [docompyle++](https://github.com/zrax/pycdc) repository
 
+### Usage
+* `pip install .`
+* `dearmor -h`
+* Use file names and not full paths - I still have some things in the user interface to improve
+
 ### TODO
 [X] obfuscate entire module and not just single functions
 [X] adding a nice user interface
