@@ -130,3 +130,12 @@ dmypy.json
 .pyre/
 
 temp/
+
+CMakeFiles
+*.vcxproj**
+*.sln
+*.cmake
+**CMakeCache.txt
+**tlog
+**recipe
+*.obj
