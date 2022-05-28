@@ -13,7 +13,7 @@ def main(file:Path=None, error_file:Path=None, print_user_messages:bool=False):
     assert error_file
     file= file.resolve()
     error_file = error_file.resolve()
-    shutil.copy(Path(__file__).parent.resolve() / "code.py", file.parent / "dearmor.txt")
+    shutil.copy(Path(__file__).parent.resolve() / "code.py", file.parent.resolve() / "dearmor.txt")
     with open(str(error_file), 'w') as f:
         p = subprocess.Popen([sys.executable, str(file)], cwd=str(file.parent), stdout=f, stderr=f)
         time.sleep(1) # this is used to allow the python process to create it's child process

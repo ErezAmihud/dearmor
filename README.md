@@ -30,7 +30,7 @@ To change the files from pyc to py, use the amazing [docompyle++](https://github
 - [X] Compile automatically on install
 - [ ] add black formatting
 - [ ] Find out how to include `code.py` as package data
-- [ ] make the code work on versions other than >3.6
+- [ ] make the code work on versions other than >3.6 (changes are both in the cpp and the syntax of the python in the code.py file)
 - [ ] check on advanced modes
 - [ ] automatically run tests on pull requests
 - [ ] make scripts to automatically extract an exe

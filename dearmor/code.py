@@ -65,7 +65,10 @@ def decrypt_code(obj):
     a(*args, *vars_, **kwargs)  
     return obj
 
+# TODO can I import the other module to invoke it?
+
 def __armor_exit__():
+    print(inspect.currentframe().f_back.f_code.co_name)
     global started_exiting
     if not started_exiting:
         started_exiting = True
@@ -74,8 +77,15 @@ def __armor_exit__():
             frame = frame.f_back
         code = frame.f_code
         code = output_code(code)
-        marshal_to_pyc(DUMP_DIR/'mod.pyc', code) # TODO change to indicative name
+        filename = code.co_filename.replace("<frozen ", '').replace(">", '')
+        if filename.endswith(".pyc"):
+            pass
+        elif filename.endswith(".py"):
+            filename += 'c'
+        else:
+            filename += '.pyc'
 
+        marshal_to_pyc(DUMP_DIR/filename, code)
 
 def _pack_uint32(val):
     """ Convert integer to 32-bit little-endian bytes """
