@@ -51,7 +51,7 @@ def test_single_file(py_file, obfuscation_file, temp_dir):
     compiled_file = compile(open(PY_DIR/py_file, 'r').read(), "<string>", 'exec')
     compare_code(compiled_file, generated_by_us, f"start{os.linesep}")
 
-
+@pytest.mark.skip("this is not ready yet")
 @pytest.mark.parametrize('py_file',[str(Path('entry_script') / 'a.py')])
 def test_entry_script(py_file, obfuscation_file, temp_dir):
     dearmor_main(temp_dir / os.path.basename(py_file), Path('out.txt'))

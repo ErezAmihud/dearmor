@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import tempfile
 import subprocess
 from functools import wraps
@@ -10,7 +11,12 @@ import inspect
 from unittest.mock import MagicMock
 
 
-TRY_STATEMENT = 122
+RETURN_OPCODE = b'S\x00'
+SETUP_FINALLY = 122
+EXTENDED_ARG = 144
+OPCODE_SIZE = 2
+JUMP_FORWARD = 110
+# TODO more documentation
 
 def get_magic():
     if sys.version_info >= (3,4):
@@ -26,6 +32,56 @@ DUMP_DIR.mkdir(exist_ok=True)
 
 started_exiting=False
 
+def execute_code_obj(obj:types.CodeType):    
+    def a():
+        pass
+    if len(obj.co_freevars) != 0:
+        print_func_data(obj)
+    a.__code__ = obj
+
+    args = [MagicMock() for i in range(obj.co_posonlyargcount)]
+    kwargs = {obj.co_varnames[-i]:MagicMock()  for i in range(obj.co_kwonlyargcount)}
+    vars_ = [MagicMock() for _ in range(obj.co_argcount-obj.co_kwonlyargcount-obj.co_posonlyargcount)]
+    
+    try:
+        a(*args, *vars_, **kwargs)
+    except:
+        pass
+
+def find_first_opcode(co: bytes, op_code: int):
+    for i in range(0, len(co), 2):
+        if co[i] == op_code:
+            return i
+    raise ValueError("Could not find the opcode")
+
+
+def get_arg_bytes(co: bytes, op_code_index: int) -> bytearray:
+    """
+    This function calculate the argument of a call while considering the EXTENDED_ARG opcodes that may come before that
+    """
+    result = bytearray()
+    result.append(co[op_code_index+1])
+
+    checked_opcode = op_code_index - 2
+    while checked_opcode >= 0 and co[checked_opcode] == EXTENDED_ARG:
+        result.insert(0, co[checked_opcode + 1])
+        checked_opcode-=2
+    return result
+
+def calculate_arg(co: bytes, op_code_index: int) -> int:
+    return int.from_bytes(get_arg_bytes(co, op_code_index), 'big')
+
+def handle_under_armor(obj: types.CodeType):
+    # TODO make handling EXTENDED_ARG a function
+    i = find_first_opcode(obj.co_code, JUMP_FORWARD)
+    jumping_arg = calculate_arg(obj.co_code, i)
+    pop_index = jumping_arg + 6
+    obj = copy_code_obj(obj, co_code=obj.co_code[:pop_index] + RETURN_OPCODE + obj.co_code[pop_index+2:])
+    
+    execute_code_obj(obj)
+
+    new_names = tuple(n for n in obj.co_names if n!= "__armor__")
+    return copy_code_obj(obj, co_code=obj.co_code[:jumping_arg], co_names=new_names)
 
 def output_code(obj):
     if isinstance(obj, types.CodeType):
@@ -37,9 +93,39 @@ def output_code(obj):
             co_cellvars=tuple(output_code(name) for name in obj.co_cellvars),
             co_consts=tuple(output_code(name) for name in obj.co_consts)
         )
-        obj = decrypt_code(obj)
-        obj = remove_pyarmor_code(obj)
+
+        # TODO I think there is a bug here because the prints are really weird.
+        if "pytransform" in obj.co_freevars:
+            #  obj.co_name not in ["<lambda>", 'check_obfuscated_script', 'check_mod_pytransform']:
+            pass
+        elif "__armor__" in obj.co_names:
+            # TODO I don't know when a function uses __armor__ but we should find it and add tests
+            obj = handle_under_armor(obj)
+
+        elif "__armor_enter__" in obj.co_names: 
+            obj = handle_armor_enter(obj)
+        else:
+            pass
     return obj
+
+def handle_armor_enter(obj: types.CodeType):
+    new_code = obj.co_code[:22] + RETURN_OPCODE + obj.co_code[24:] # replace the pop_top after __pyarmor_enter__ to return
+    obj = copy_code_obj(obj, co_code=new_code)
+
+    execute_code_obj(obj)
+    
+    names = tuple(n for n in obj.co_names if not n.startswith('__armor')) # remove the pyarmor functions
+    raw_code = obj.co_code
+
+    try_start = find_first_opcode(obj.co_code, SETUP_FINALLY)
+
+    size = calculate_arg(obj.co_code, try_start)
+    raw_code = raw_code[:try_start+size]
+
+    raw_code = raw_code[try_start+2:]
+    raw_code += RETURN_OPCODE # add return # TODO this adds return none to everything? what?
+    return copy_code_obj(obj, co_names=names, co_code=raw_code)
+
 
 def print_func_data(obj: types.CodeType):
     """
@@ -50,25 +136,9 @@ def print_func_data(obj: types.CodeType):
     marshal_to_pyc(path, obj)
     subprocess.Popen(['pycdas', path]).communicate()
 
-def decrypt_code(obj):
-    new_code = obj.co_code[:22] + b'S\x00' + obj.co_code[24:] # replace the pop_top after __pyarmor_enter__ to return
-    obj = copy_code_obj(obj, co_code=new_code)
-
-    def a():
-        pass
-    a.__code__ = obj
-
-    args = [MagicMock() for i in range(obj.co_posonlyargcount)]
-    kwargs = {obj.co_varnames[-i]:MagicMock()  for i in range(obj.co_kwonlyargcount)}
-    vars_ = [MagicMock() for _ in range(obj.co_argcount-obj.co_kwonlyargcount-obj.co_posonlyargcount)]
-
-    a(*args, *vars_, **kwargs)  
-    return obj
-
 # TODO can I import the other module to invoke it?
 
 def __armor_exit__():
-    print(inspect.currentframe().f_back.f_code.co_name)
     global started_exiting
     if not started_exiting:
         started_exiting = True
@@ -182,33 +252,6 @@ def copy_code_obj(
         co_cellvars
     )
 
-def remove_pyarmor_code(code:types.CodeType):
-    """
-    removes all of pyarmor code from a given function and keep only the needed code
-
-    The steps are:
-    * remove all the pyarmor specific names in constants
-    * remove all the random code that pyarmor adds at the start of the functions by finding the try-finally that wraps the whole thing
-    * using the try finally find the last relevant opcode of the function
-    * add RETURN_VALUE to the end of the function
-
-    """
-    names = tuple(n for n in code.co_names if not n.startswith('__armor')) # remove the pyarmor functions
-    code = copy_code_obj(code, co_names=names)
-    
-    raw_code = code.co_code
-    try_start = raw_code.find(TRY_STATEMENT)
-    raw_code = raw_code[try_start:]
-    code = copy_code_obj(code, co_names=names, co_code=raw_code)
-
-    # remove the try-finally and keep only the code it contains
-    itera = dis.get_instructions(code)
-    try_block = next(itera)
-    first_op = next(itera)
-    raw_code = raw_code[first_op.offset:try_block.arg]
-    raw_code += chr(83).encode() # add return_value op
-    raw_code += chr(0).encode() # add return_value op
-    return copy_code_obj(code, co_code=raw_code)
 
 def marshal_to_pyc(file_path:typing.Union[str, Path], code:types.CodeType):
     file_path = str(file_path)
