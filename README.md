@@ -28,6 +28,8 @@ To change the files from pyc to py, use the amazing [docompyle++](https://github
 - [X] figure out a way to resolve the functions without invoking their actual code (maybe run the code in a subinterpreter where we can close after the call to __armor_enter__  ?)
 - [X] Use a nicer way to inject the code - I don't like that I have to compile the dll, and we can just use ctypes to disable the gil.
 - [X] Compile automatically on install
+- [ ] Adding automatic testing to different python versions
+- [ ] Figure out a way to not force the code to be compatible to EVERY python version
 - [ ] add black formatting
 - [ ] Find out how to include `code.py` as package data
 - [ ] make the code work on versions other than >3.6 (changes are both in the cpp and the syntax of the python in the code.py file)
@@ -45,3 +47,9 @@ It was done in the last week, so there might be some bugs I haven't saw yet. Ope
 
 ### Desclaimer
 This repo is for educational purposes only. I take no responsibility for its usage. 
+
+### Tested versions:
+- 3.7
+
+### Installation
+You need to install cmake in order for this repo to compile it's c extension. To install cmake you can use `pip install cmake`

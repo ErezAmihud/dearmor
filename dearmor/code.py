@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 import tempfile
 import subprocess
 from functools import wraps
@@ -6,17 +5,40 @@ import typing
 import struct
 from pathlib import Path
 import marshal
-import sys,inspect,dis,types
+import sys,inspect,types
 import inspect
-from unittest.mock import MagicMock
 
 
+LOAD_GLOBAL = 116
 RETURN_OPCODE = b'S\x00'
 SETUP_FINALLY = 122
 EXTENDED_ARG = 144
 OPCODE_SIZE = 2
 JUMP_FORWARD = 110
 # TODO more documentation
+
+code_attrs = [ # ordered correctly by types.CodeType type creation
+        'co_argcount',
+        'co_posonlyargcount',
+        'co_kwonlyargcount',
+        'co_nlocals',
+        'co_stacksize',
+        'co_flags',
+        'co_code',
+        'co_consts',
+        'co_names',
+        'co_varnames',
+        'co_filename',
+        'co_name',
+        'co_firstlineno',
+        'co_lnotab',
+        'co_freevars',
+        'co_cellvars'
+]
+
+if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 8):
+    code_attrs.remove('co_posonlyargcount')
+
 
 def get_magic():
     if sys.version_info >= (3,4):
@@ -39,12 +61,19 @@ def execute_code_obj(obj:types.CodeType):
         print_func_data(obj)
     a.__code__ = obj
 
-    args = [MagicMock() for i in range(obj.co_posonlyargcount)]
-    kwargs = {obj.co_varnames[-i]:MagicMock()  for i in range(obj.co_kwonlyargcount)}
-    vars_ = [MagicMock() for _ in range(obj.co_argcount-obj.co_kwonlyargcount-obj.co_posonlyargcount)]
+
+    number_of_regular_arguments = obj.co_argcount
+    if sys.version_info.major > 3 or (sys.version_info.major == 3 and sys.version_info.minor > 7):
+        args = [i for i in range(obj.co_posonlyargcount)]
+        number_of_regular_arguments -= obj.co_posonlyargcount
+    else:
+        args = []
+    
+    kwargs = {obj.co_varnames[-i]:i for i in range(obj.co_kwonlyargcount)}
+    args.extend([i for i in range(number_of_regular_arguments - obj.co_kwonlyargcount)])
     
     try:
-        a(*args, *vars_, **kwargs)
+        a(*args, **kwargs)
     except:
         pass
 
@@ -109,7 +138,10 @@ def output_code(obj):
     return obj
 
 def handle_armor_enter(obj: types.CodeType):
-    new_code = obj.co_code[:22] + RETURN_OPCODE + obj.co_code[24:] # replace the pop_top after __pyarmor_enter__ to return
+
+    load_enter_function = b''.join(i.to_bytes(1, byteorder='big') for i in [LOAD_GLOBAL, obj.co_names.index("__armor_enter__")])
+    pop_top_start = obj.co_code.find(load_enter_function) + 4
+    new_code = obj.co_code[:pop_top_start] + RETURN_OPCODE + obj.co_code[pop_top_start+2:] # replace the pop_top after __pyarmor_enter__ to return
     obj = copy_code_obj(obj, co_code=new_code)
 
     execute_code_obj(obj)
@@ -210,46 +242,33 @@ def orig_or_new(func):
     wrapee.__signature__ = sig
     return wrapee
 
+def array_to_params(names_array):
+    return [inspect.Parameter(name, inspect.Parameter.KEYWORD_ONLY, default=None) for name in names_array]
+
+def sig_from_array(names_array):
+    def decor(f):
+        sig = inspect.Signature(parameters=array_to_params(names_array))
+        @wraps(f)
+        def wrappe(**kwargs):
+            bound = sig.bind(**kwargs)
+            bound.apply_defaults()
+            return f(**bound.kwargs)
+        wrappe.__signature__ = sig
+        return wrappe
+    return decor
+
 @orig_or_new
+@sig_from_array(code_attrs)
 def copy_code_obj(
-    co_argcount=None,
-    co_posonlyargcount=None,
-    co_kwonlyargcount=None,
-    co_nlocals=None,
-    co_stacksize=None,
-    co_flags=None,
-    co_code=None,
-    co_consts=None,
-    co_names=None,
-    co_varnames=None,
-    co_filename=None,
-    co_name=None,
-    co_firstlineno=None,
-    co_lnotab=None,
-    co_freevars=None,
-    co_cellvars=None
+    **kwargs
     ):
     """
     create a copy of code object with different paramters.
     If a parameter is None then the default is the previous code object values
     """
+    args = [kwargs[name] for name in code_attrs]
     return types.CodeType(
-        co_argcount,
-        co_posonlyargcount,
-        co_kwonlyargcount,
-        co_nlocals,
-        co_stacksize,
-        co_flags,
-        co_code,
-        co_consts,
-        co_names,
-        co_varnames,
-        co_filename,
-        co_name,
-        co_firstlineno,
-        co_lnotab,
-        co_freevars,
-        co_cellvars
+        *args
     )
 
 

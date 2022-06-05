@@ -2,7 +2,7 @@ import os
 import sys
 import types
 import marshal
-from dearmor.code import DUMP_DIR, code_to_bytecode, get_magic
+from dearmor.code import get_magic, code_attrs
 
 
 def pyc_to_code(data) -> types.CodeType:
@@ -16,20 +16,13 @@ def pyc_to_code(data) -> types.CodeType:
     return marshal.loads(data)
 
 
-# without co_filename, co_name, co_firstlineno, co_lnotab, co_stacksize, co_flags
-all_code_data = [
-        'co_argcount',
-        'co_posonlyargcount',
-        'co_kwonlyargcount',
-        'co_nlocals',
-        'co_code',
-        'co_consts',
-        'co_names',
-        'co_varnames',
-        'co_freevars',
-        'co_cellvars'
-    ]
-
+unwanted_code_attrs = ['co_filename', 'co_name', 'co_firstlineno', 'co_lnotab', 'co_stacksize', 'co_flags']
+all_code_data = list(
+    filter(
+        lambda x: x not in unwanted_code_attrs,
+        code_attrs
+        )
+)
 
 def compare_code(code1:types.CodeType, code2:types.CodeType, debug_data):
     assert type(code1) is type(code2), debug_data

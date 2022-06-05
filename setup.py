@@ -1,7 +1,6 @@
 import os
 import shutil
 import subprocess
-import logging
 from typing import List
 import sys
 from platform import system
@@ -130,7 +129,7 @@ class InstallLib(install_lib.install_lib):
 
         src = dft_lib if os.path.exists(dft_lib) else build_lib
         
-        self.announce('Installing shared library: %s', src)
+        self.announce('Installing shared library: %s'.format(str(src)))
         dst, _ = self.copy_file(src, dst)
         outfiles.append(dst)
         return outfiles
@@ -148,14 +147,14 @@ if __name__ == '__main__':
     # - python setup.py bdist_wheel && pip install <wheel-name>
 
     setup(name='dearmor',
-          version='0.0',
+          version='0.1',
           description="Deobfuscate pyarmor files",
           author='Erez Amihud',
             author_email='erezamihud@gmail.com',
             url='https://github.com/ErezAmihud/dearmor',
             packages=['dearmor'],
-            requires=['pyinjector', 'psutil'],
-            extras_require={"test": ["pytest", 'pytest-timeout']},
+            install_requires=['pyinjector', 'psutil'],
+            extras_require={"test": ["pytest", 'pytest-timeout', 'pyarmor']},
       
           ext_modules=[CMakeExtension('dearmor')],
           cmdclass={
