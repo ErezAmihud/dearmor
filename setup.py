@@ -54,14 +54,19 @@ if __name__ == '__main__':
     setup(name='dearmor',
           version='0.2',
           description="Deobfuscate pyarmor files",
+          long_description=open("README.md",'r').read(),
+              long_description_content_type='text/markdown',
           author='Erez Amihud',
           author_email='erezamihud@gmail.com',
           url='https://github.com/ErezAmihud/dearmor',
           packages=['dearmor'],
           install_requires=['pyinjector', 'psutil'],
-          extras_require={"test": ["pytest", 'pytest-timeout', 'pyarmor']},
+          extras_require={
+            "test": ["pytest", 'pytest-timeout', 'pyarmor'],
+            "package": ["build", "twine"]
+        },
           include_package_data=True,
-          package_data={'dearmor':['*.dll']},
+          package_data={'dearmor':['Release\\*.dll']},
           license='Apache-2.0',
           entry_points={
                         'console_scripts': [
