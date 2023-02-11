@@ -19,7 +19,7 @@ def main(file:Path=None, error_file:Path=None, print_user_messages:bool=False):
         time.sleep(1) # this is used to allow the python process to create it's child process
         current_process = psutil.Process(p.pid)
         child = current_process.children(recursive=True)
-        inject(child[0].pid, str(Path(__file__).parent.parent / "dearmor-library" / "lib" / "dearmor.dll"))
+        inject(child[0].pid, str(Path(__file__).parent /  "Release" / "dearmor.dll"))
     
         if p.wait() != 0:
             raise ValueError("running file itself failed.")
