@@ -1,6 +1,7 @@
 import tempfile
 import os
 import subprocess
+import typing
 from types import CodeType
 from pathlib import Path
 import pytest
@@ -9,7 +10,7 @@ from .utils import pyc_to_code, compare_code
 from dearmor import dearmor_main
 
 PY_DIR: Path = Path(__file__).parent.resolve() / "py_files"
-TEMP_DIR: Path = Path(__file__).parent.resolve() / "temp" / "build"
+TEMP_DIR: typing.Union[Path, None] = Path(os.environ["TEMP_PATH"]) if "TEMP_PATH" in os.environ else None
 TESTED_FILES = [
     'simple.py',
     'functions_with_parameters.py',
@@ -21,7 +22,7 @@ TESTED_FILES = [
 
 @pytest.fixture
 def temp_dir():
-    with tempfile.TemporaryDirectory() as f:
+    with tempfile.TemporaryDirectory(dir=TEMP_DIR) as f:
         yield Path(f)
 
 @pytest.fixture

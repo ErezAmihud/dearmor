@@ -28,4 +28,6 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: pip install .[test]
       - name: Test
+        env:
+          TEMP_PATH: ${{ runner.temp }}
         run: pytest
