@@ -10,7 +10,9 @@ from .utils import pyc_to_code, compare_code
 from dearmor import dearmor_main
 
 PY_DIR: Path = Path(__file__).parent.resolve() / "py_files"
-TEMP_DIR: typing.Union[Path, None] = Path(os.environ["TEMP_PATH"]) if "TEMP_PATH" in os.environ else None
+TEMP_DIR: Path = Path(os.environ["TEMP_PATH"]).absolute() if "TEMP_PATH" in os.environ else Path(tempfile.gettempdir())
+TEMP_DIR.mkdir(parents=True, exist_ok=True)
+
 TESTED_FILES = [
     'simple.py',
     'functions_with_parameters.py',
@@ -22,8 +24,11 @@ TESTED_FILES = [
 
 @pytest.fixture
 def temp_dir():
-    with tempfile.TemporaryDirectory(dir=TEMP_DIR) as f:
-        yield Path(f)
+    if "TEMP_PATH" in os.environ:
+        with tempfile.TemporaryDirectory(dir=TEMP_DIR) as f:
+            yield Path(f)
+    else:
+        yield tempfile.TemporaryDirectory(dir=TEMP_DIR).name
 
 @pytest.fixture
 def obfuscation_file(temp_dir, py_file):

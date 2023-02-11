@@ -44,5 +44,5 @@ jobs:
         run: pip install .[test]
       - name: Test
         env:
-          TEMP_PATH: ${{ runner.temp }}
+          TEMP_PATH: random_dir
         run: pytest
