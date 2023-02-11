@@ -3,8 +3,21 @@ name: test
 on: push
 
 jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: build
+        run: .\build_binary.bat
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dearmor-lib-build
+          path: dearmor/Release
+
   test:
     runs-on: windows-latest
+    needs: build
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9"]
@@ -17,8 +30,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: setup.py
-      - name: build
-        run: .\build_binary.bat
+      - name: Download a single artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dearmor-lib-build
       - uses: actions/cache@v3
         id: cache
         with:
