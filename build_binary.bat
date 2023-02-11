@@ -1,2 +1,2 @@
-cmake -S dearmor-library -B build
+cmake -S dearmor-library -B build --fresh
 cmake --build build --config Release
