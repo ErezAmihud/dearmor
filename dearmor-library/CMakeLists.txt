@@ -3,8 +3,12 @@ project(dearmor)
 
 find_package(PythonLibs REQUIRED)
 
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}\\..\\dearmor)
-
+if (UNIX)
+    set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../dearmor)
+endif()
+if(WIN32)
+    set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}\\..\\dearmor)
+endif()
 
 add_library(dearmor
     SHARED
