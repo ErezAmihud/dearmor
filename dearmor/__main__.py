@@ -11,12 +11,11 @@ from pyinjector import inject
 def dearmor_main(file:Path):
     file= file.resolve()
     shutil.copy(Path(__file__).parent.resolve() / "code.py", file.parent.resolve() / "dearmor.txt")
-    p = subprocess.Popen([sys.executable, str(file)], shell=False, cwd=str(file.parent), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen([sys.executable, str(file)], shell=True, cwd=str(file.parent), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     time.sleep(1) # this is used to allow the python process to create it's child process
     current_process = psutil.Process(p.pid)
     child = current_process.children()
     inject(child[0].pid, str(Path(__file__).parent /  "Release" / "dearmor.dll"))
-
     out, err = p.communicate()
     if p.wait() != 0:
         raise ValueError(f"running file itself failed. stdout={out} stderr={err}")

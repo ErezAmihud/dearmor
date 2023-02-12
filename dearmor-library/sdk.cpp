@@ -16,6 +16,8 @@ void SDK::InitCPython()
         hPython = GetModuleHandleA("Python38.dll");
     else if (GetModuleHandleA("Python37.dll"))
         hPython = GetModuleHandleA("Python37.dll");
+    else if (GetModuleHandleA("Python36.dll"))
+        hPython = GetModuleHandleA("Python36.dll");
     Py_SetProgramName = (_Py_SetProgramName)(GetProcAddress(hPython, "Py_SetProgramName"));
     PyEval_InitThreads = (_PyEval_InitThreads)(GetProcAddress(hPython, "PyEval_InitThreads"));
     PyGILState_Ensure = (_PyGILState_Ensure)(GetProcAddress(hPython, "PyGILState_Ensure"));
