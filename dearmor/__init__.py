@@ -1,1 +1,1 @@
-from .__main__ import main as dearmor_main
+from .__main__ import dearmor_main

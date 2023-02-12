@@ -39,7 +39,7 @@ def obfuscation_file(temp_dir, py_file):
 
 @pytest.mark.parametrize('py_file',TESTED_FILES)
 def test_single_file(py_file, obfuscation_file, temp_dir):
-    dearmor_main(obfuscation_file, Path('out.txt'))
+    dearmor_main(obfuscation_file)
 
     generated_by_us = open(str((temp_dir / 'dump' / (py_file+'c')).resolve()), 'rb').read()
     generated_by_us: CodeType = pyc_to_code(generated_by_us)
