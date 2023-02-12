@@ -24,11 +24,11 @@ TESTED_FILES = [
 
 @pytest.fixture
 def temp_dir():
-    if "TEMP_PATH" in os.environ:
-        with tempfile.TemporaryDirectory(dir=TEMP_DIR) as f:
+    if "TEMP_PATH" not in os.environ:
+        with tempfile.TemporaryDirectory() as f:
             yield Path(f)
     else:
-        yield tempfile.TemporaryDirectory(dir=TEMP_DIR).name
+        yield Path(tempfile.TemporaryDirectory(dir=TEMP_DIR).name)
 
 @pytest.fixture
 def obfuscation_file(temp_dir, py_file):

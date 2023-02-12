@@ -61,10 +61,7 @@ if __name__ == '__main__':
           url='https://github.com/ErezAmihud/dearmor',
           packages=['dearmor'],
           install_requires=['pyinjector', 'psutil'],
-          extras_require={
-            "test": ["pytest", 'pytest-timeout', 'pyarmor'],
-            "package": ["build", "twine"]
-        },
+          extras_require={"test": ["pytest", 'pytest-timeout', 'pyarmor']},
           include_package_data=True,
           package_data={'dearmor':['Release\\*.dll']},
           license='Apache-2.0',
