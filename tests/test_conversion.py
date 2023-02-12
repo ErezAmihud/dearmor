@@ -30,13 +30,18 @@ def temp_dir():
     else:
         yield Path(tempfile.TemporaryDirectory(dir=TEMP_DIR).name)
 
+    
 @pytest.fixture
-def obfuscation_file(temp_dir, py_file):
-    p = subprocess.Popen(['pyarmor', 'obfuscate', "-O", str(temp_dir), str(PY_DIR / py_file)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+def obfuscation_file(temp_dir, py_file, pyarmor_flags):
+    p = subprocess.Popen(['pyarmor', 'obfuscate', *pyarmor_flags, "-O", str(temp_dir), str(PY_DIR / py_file)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if p.wait() != 0:
         raise ValueError(p.communicate())
     yield temp_dir / py_file
 
+@pytest.mark.parametrize("pyarmor_flags", (
+    [],
+    ["--enable-suffix"],
+))
 @pytest.mark.parametrize('py_file',TESTED_FILES)
 def test_single_file(py_file, obfuscation_file, temp_dir):
     dearmor_main(obfuscation_file)
