@@ -1,7 +1,6 @@
 name: Publish to PyPI.org
-on:
-  release:
-    types: [published]
+on: push
+  
 jobs:
   build:
     runs-on: windows-latest
@@ -28,4 +27,5 @@ jobs:
         with:
           name: dearmor-lib-build
       - run: python3 -m pip install --upgrade build && python3 -m build
-      - run: ls -R .
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
