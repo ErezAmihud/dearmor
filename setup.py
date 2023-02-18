@@ -27,7 +27,7 @@ def lib_name() -> str:
 if __name__ == "__main__":
     setup(
         name="dearmor",
-        version="0.3",
+        version="0.3.1",
         description="Deobfuscate pyarmor files",
         long_description=open("README.md", "r").read(),
         long_description_content_type="text/markdown",
