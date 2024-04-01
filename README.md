@@ -1,8 +1,9 @@
 ```diff
 - WARNING
+- This Program will end up running your .exe file.
+- Use this at your own risk or in a VM.
 ```
-This Program will end up running your .exe file.
-Use this at your own risk or in a VM.
+
 
 # dearmor
 Deobfuscate [pyarmor](https://pypi.org/project/pyarmor/) encryption.
