@@ -24,6 +24,12 @@ If something is unclear open an issue
 ### Desclaimer
 This repo is for educational purposes only. I take no responsibility for its usage. 
 
+```diff
+- WARNING
+- This Program will end up running your .exe/.pyc file.
+- Do not use this program if you don't trust the .exe/.pyc, or run it in a VM
+```
+
 ### Tested versions:
 - 3.6
 - 3.7
