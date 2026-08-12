@@ -1,11 +1,15 @@
+"""Packaging script for dearmor.
+
+The injected library is *not* built from here: run ``build_binary.bat`` to
+produce ``dearmor/Release/dearmor.dll`` with cmake first, the wheel then ships
+that dll as package data.
+"""
+
 import os
-import shutil
-import subprocess
-from typing import List
 import sys
 from platform import system
-from setuptools import setup, find_packages, Extension
-from setuptools.command import build_ext, sdist, install_lib
+
+from setuptools import setup
 
 # You can't use `pip install .` as pip copies setup.py to a temporary
 # directory, parent directory is no longer reachable (isolated build) .
@@ -13,7 +17,7 @@ CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, CURRENT_DIR)
 
 
-def lib_name() -> str:
+def shared_library_name() -> str:
     """Return platform dependent shared object name."""
     if system() == "Linux" or system().upper().endswith("BSD"):
         return "dearmor.so"

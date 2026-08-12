@@ -1,13 +1,15 @@
+# A class body is a code object nested in the module, and its methods are
+# nested once more, so this checks that deobfuscation recurses correctly.
 import time
 
 time.sleep(2)
 
 
-class a:
-    def __init__(self, c):
-        self.b = 4
-        self.c = c
+class Container:
+    def __init__(self, value):
+        self.constant = 4
+        self.value = value
 
 
-ins = a(9)
-c = ins.b == 4
+instance = Container(9)
+has_expected_constant = instance.constant == 4

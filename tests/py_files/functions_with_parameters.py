@@ -1,16 +1,18 @@
+# Functions taking arguments: dearmor has to synthesise placeholder arguments
+# for the calls it makes to trigger decryption.
 import time
 
 time.sleep(2)
 
 
-def a(param1):
-    return param1
+def identity(first):
+    return first
 
 
-def b(param1, param2):
-    param2 += 1
-    return param1
+def increments_second(first, second):
+    second += 1
+    return first
 
 
-a(99)
-b(1, 5)
+identity(99)
+increments_second(1, 5)

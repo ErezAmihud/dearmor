@@ -1,19 +1,37 @@
+/*
+ * Entry point of dearmor.dll, the library injected into the obfuscated process.
+ *
+ * Its only job is to run the dearmor payload inside the interpreter that is
+ * already running in the target: it resolves the CPython API from the loaded
+ * interpreter DLL, takes the GIL and executes the payload file (dearmor.txt,
+ * a copy of dearmor/code.py, see DEARMOR_CODE in CMakeLists.txt) in the target's
+ * __main__ namespace. Everything else happens in Python from there on.
+ */
+
 #include "sdk.h"
 
-SDK sdk;
+PythonRuntime pythonRuntime;
 
-void ExecutePython(){
-    sdk.InitCPython();
+/* Read the payload file and execute it in the target interpreter. */
+void RunDearmorPayload(){
+    pythonRuntime.Load();
     PyEval_InitThreads();
-    PyGILState_STATE s = PyGILState_Ensure();
+
+    /* The target's threads are running, so the GIL has to be acquired before
+     * touching the interpreter. */
+    PyGILState_STATE gilState = PyGILState_Ensure();
     PyRun_SimpleString("with open('"DEARMOR_CODE"', 'r') as file: data=file.read() ; exec(data)");
-    PyGILState_Release(s);
-    
+    PyGILState_Release(gilState);
+
 }
 
+/* Runs on a dedicated thread so DllMain returns immediately and the loader lock
+ * is not held while Python code executes. */
 DWORD WINAPI MainThread(HMODULE hModule)
 {
-    ExecutePython();
+    RunDearmorPayload();
+    /* The payload has already dumped everything; unload ourselves so the target
+     * can carry on (and exit) as usual. */
     FreeLibraryAndExitThread(hModule, 0);
     CloseHandle(hModule);
 }

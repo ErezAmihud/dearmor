@@ -1,4 +1,7 @@
+# The most basic case: a module with nothing but a top level assignment.
+# Every sample sleeps so the process stays alive long enough for dearmor to
+# inject its DLL into it.
 import time
 
 time.sleep(2)
-b = 1 + 1
+result = 1 + 1
