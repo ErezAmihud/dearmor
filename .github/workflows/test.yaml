@@ -15,12 +15,35 @@ jobs:
           name: dearmor-lib-build
           path: dearmor/Release
 
+  # The PyArmor 8/9 backend is pure Python, so it needs neither the DLL nor
+  # Windows.
   test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: setup.py
+      - name: Install Dependencies
+        run: pip install .[test]
+      - name: Test
+        run: pytest
+
+  # The legacy backend needs the injected DLL, an old PyArmor and an old Python.
+  test-legacy:
     runs-on: windows-latest
     needs: build
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9"]
+        python-version: ["3.8", "3.9"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v3
@@ -34,14 +57,9 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: dearmor-lib-build
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-test-v03
+          path: dearmor/Release
       - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install .[test]
+        run: pip install .[test,legacy] "pyarmor<8"
       - name: Test
         env:
           TEMP_PATH: random_dir

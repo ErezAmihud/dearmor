@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from .utils import pyc_to_code, compare_code
-from dearmor import dearmor_main
+from dearmor import dearmor_legacy
 
 PY_DIR: Path = Path(__file__).parent.resolve() / "py_files"
 TEMP_DIR: Path = (
@@ -16,6 +16,28 @@ TEMP_DIR: Path = (
     else Path(tempfile.gettempdir())
 )
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
+
+
+# ``pyarmor obfuscate`` is the PyArmor 7 command; PyArmor 8 replaced it with
+# ``pyarmor gen`` and the legacy backend cannot read what that produces.  See
+# test_pyarmor8.py for the tests that cover the current PyArmor.
+def has_legacy_pyarmor():
+    try:
+        return (
+            subprocess.call(
+                ["pyarmor", "obfuscate", "--help"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            == 0
+        )
+    except OSError:
+        return False
+
+
+pytestmark = pytest.mark.skipif(
+    not has_legacy_pyarmor(), reason="needs PyArmor 7 or older"
+)
 
 TESTED_FILES = [
     "simple.py",
@@ -64,7 +86,7 @@ def obfuscation_file(temp_dir, py_file, pyarmor_flags):
 )
 @pytest.mark.parametrize("py_file", TESTED_FILES)
 def test_single_file(py_file, obfuscation_file, temp_dir):
-    dearmor_main(obfuscation_file)
+    dearmor_legacy(obfuscation_file)
 
     generated_by_us = open(
         str((temp_dir / "dump" / (py_file + "c")).resolve()), "rb"
