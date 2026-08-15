@@ -9,6 +9,19 @@ import argparse
 from pyinjector import inject
 
 
+def injection_target(pid: int) -> int:
+    """Return the pid of the process actually running the python code.
+
+    Frozen executables (and `shell=True`, which runs the interpreter under
+    cmd.exe) run the code in a child process, so the first child is the one to
+    inject into. A plain `python file.py` has no such child and is itself the
+    target.
+    """
+    process = psutil.Process(pid)
+    children = process.children()
+    return children[0].pid if children else process.pid
+
+
 def dearmor_main(file: Path):
     file = file.resolve()
     shutil.copy(
@@ -27,9 +40,10 @@ def dearmor_main(file: Path):
     time.sleep(
         1
     )  # this is used to allow the python process to create it's child process
-    current_process = psutil.Process(p.pid)
-    child = current_process.children()
-    inject(child[0].pid, str(Path(__file__).parent / "Release" / "dearmor.dll"))
+    inject(
+        injection_target(p.pid),
+        str(Path(__file__).parent / "Release" / "dearmor.dll"),
+    )
     out, err = p.communicate()
     if p.wait() != 0:
         raise ValueError(f"running file itself failed. stdout={out} stderr={err}")

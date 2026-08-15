@@ -36,7 +36,9 @@ if __name__ == "__main__":
         url="https://github.com/ErezAmihud/dearmor",
         packages=["dearmor"],
         install_requires=["pyinjector", "psutil"],
-        extras_require={"test": ["pytest", "pytest-timeout", "pyarmor"]},
+        # pyarmor 8 replaced `pyarmor obfuscate` with `pyarmor gen` and dropped
+        # --enable-suffix, both of which the tests drive directly.
+        extras_require={"test": ["pytest", "pytest-timeout", "pyarmor<8"]},
         include_package_data=True,
         package_data={"dearmor": ["Release\\*.dll"]},
         license="Apache-2.0",

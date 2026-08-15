@@ -6,42 +6,49 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: build
         run: .\build_binary.bat
       - name: Archive production artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dearmor-lib-build
-          path: dearmor/Release
+          path: dearmor/Release/dearmor.dll
+          if-no-files-found: error
 
   test:
     runs-on: windows-latest
     needs: build
+    timeout-minutes: 20
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9"]
+        # The patch versions are pinned on purpose: actions/python-versions
+        # only ships windows builds up to these releases, so the plain "3.6"
+        # style specifier resolves to a version (3.6.15) that cannot be
+        # installed on a windows runner.
+        python-version: ["3.6.8", "3.7.9", "3.8.10", "3.9.13"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: setup.py
       - name: Download a single artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: dearmor-lib-build
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-test-v03
+          # dearmor.__main__ injects <package>/Release/dearmor.dll, so the
+          # library has to be unpacked there and not into the workspace root.
+          path: dearmor/Release
       - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install .[test]
+        # pip caps itself at the last release supporting the interpreter, so
+        # this gets 3.6 off the ancient pip that ships with the installer.
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[test]
       - name: Test
         env:
           TEMP_PATH: random_dir

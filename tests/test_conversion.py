@@ -29,11 +29,11 @@ TESTED_FILES = [
 
 @pytest.fixture
 def temp_dir():
-    if "TEMP_PATH" not in os.environ:
-        with tempfile.TemporaryDirectory() as f:
-            yield Path(f)
-    else:
-        yield Path(tempfile.TemporaryDirectory(dir=TEMP_DIR).name)
+    # TemporaryDirectory has to stay referenced for the lifetime of the test:
+    # dropping it runs the finalizer, which deletes the directory the test is
+    # about to use.
+    with tempfile.TemporaryDirectory(dir=str(TEMP_DIR)) as f:
+        yield Path(f)
 
 
 @pytest.fixture
